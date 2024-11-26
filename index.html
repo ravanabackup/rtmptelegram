@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram RTMPS Stream Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        function generateCommand() {
+            const videoLink = document.getElementById('videoLink').value;
+            const serverUrl = document.getElementById('serverUrl').value;
+            const streamKey = document.getElementById('streamKey').value;
+
+            if (!videoLink || !serverUrl || !streamKey) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const command = `ffmpeg -stream_loop -1 -re -i "${videoLink}" -c:v libx264 -preset veryfast -b:v 3500k -maxrate 3500k -bufsize 7000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 160k -ac 2 -ar 44100 -f flv "${serverUrl}/${streamKey}"`;
+            
+            document.getElementById('generatedCommand').value = command;
+        }
+
+        function copyCommand() {
+            const commandInput = document.getElementById('generatedCommand');
+            commandInput.select();
+            navigator.clipboard.writeText(commandInput.value);
+            
+            const copyButton = document.getElementById('copyButton');
+            copyButton.textContent = 'Copied!';
+            setTimeout(() => {
+                copyButton.textContent = 'Copy Command';
+            }, 2000);
+        }
+    </script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
+    <div class="bg-gray-800 rounded-xl shadow-2xl p-8 w-full max-w-lg">
+        <h1 class="text-3xl font-bold mb-6 text-center text-blue-400">
+            Telegram Stream Generator
+        </h1>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block mb-2 text-sm font-medium text-gray-300">
+                    Video/Audio Link
+                </label>
+                <input 
+                    id="videoLink"
+                    type="text" 
+                    placeholder="Enter video or audio stream URL"
+                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+            </div>
+
+            <div>
+                <label class="block mb-2 text-sm font-medium text-gray-300">
+                    Server URL
+                </label>
+                <input 
+                    id="serverUrl"
+                    type="text" 
+                    placeholder="rtmps://dc5-1.rtmp.t.me/s"
+                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+            </div>
+
+            <div>
+                <label class="block mb-2 text-sm font-medium text-gray-300">
+                    Stream Key
+                </label>
+                <input 
+                    id="streamKey"
+                    type="text" 
+                    placeholder="Your stream key"
+                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+            </div>
+
+            <div class="flex space-x-4">
+                <button 
+                    onclick="generateCommand()"
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-300"
+                >
+                    Generate Command
+                </button>
+            </div>
+
+            <div class="mt-4">
+                <label class="block mb-2 text-sm font-medium text-gray-300">
+                    FFmpeg Command
+                </label>
+                <textarea 
+                    id="generatedCommand"
+                    readonly
+                    rows="4"
+                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none"
+                ></textarea>
+            </div>
+
+            <div class="flex space-x-4 mt-4">
+                <button 
+                    id="copyButton"
+                    onclick="copyCommand()"
+                    class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300"
+                >
+                    Copy Command
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
