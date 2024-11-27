@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram RTMPS Stream Generator (Linux)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('serverUrl').value = 'rtmps://dc5-1.rtmp.t.me/s/';
+        });
+
+        function generateCommand() {
+            const videoLink = document.getElementById('videoLink').value.trim();
+            const serverUrl = document.getElementById('serverUrl').value.trim();
+            const streamKey = document.getElementById('streamKey').value.trim();
+
+            if (!videoLink || !serverUrl || !streamKey) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const youtubePattern = /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i;
+            const commandBase = `sudo sed -i 's/\\(APT::Get::Assume-Yes\\) "false"/\\1 "true"/' /etc/apt/apt.conf.d/00aptitude || sudo sh -c 'echo "APT::Get::Assume-Yes \\"true\\";" > /etc/apt/apt.conf.d/00aptitude' && 
+sudo apt update && sudo apt upgrade && sudo apt install ffmpeg && 
+sudo pip install yt-dlp && 
+`;
+
+            let ffmpegCommand;
+            if (youtubePattern.test(videoLink)) {
+                ffmpegCommand = `ffmpeg -re -stream_loop -1 -i "$(yt-dlp -f best -g "${videoLink}")" -c:v libx264 -preset veryfast -b:v 3500k -maxrate 3500k -bufsize 7000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 160k -ac 2 -ar 44100 -f flv "${serverUrl}${streamKey}"`;
+            } else {
+                ffmpegCommand = `ffmpeg -stream_loop -1 -re -i "${videoLink}" -c:v libx264 -preset veryfast -b:v 3500k -maxrate 3500k -bufsize 7000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 160k -ac 2 -ar 44100 -f flv "${serverUrl}${streamKey}"`;
+            }
+
+            const fullCommand = commandBase + ffmpegCommand;
+            document.getElementById('generatedCommand').value = fullCommand;
+        }
+
+        function copyCommand() {
+            const commandInput = document.getElementById('generatedCommand');
+            const copyButton = document.getElementById('copyButton');
+
+            try {
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(commandInput.value).then(() => {
+                        copyButton.textContent = 'Copied!';
+                        copyButton.classList.remove('bg-green-600');
+                        copyButton.classList.add('bg-green-700');
+                        setTimeout(() => {
+                            copyButton.textContent = 'Copy Command';
+                            copyButton.classList.remove('bg-green-700');
+                            copyButton.classList.add('bg-green-600');
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy: ', err);
+                        alert('Failed to copy command. Please copy manually.');
+                    });
+                } else {
+                    commandInput.select();
+                    document.execCommand('copy');
+                }
+            } catch (err) {
+                console.error('Copying failed: ', err);
+                alert('Failed to copy command. Please copy manually.');
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
+    <div class="bg-gray-800 rounded-xl shadow-2xl p-8 w-full max-w-lg">
+        <h1 class="text-3xl font-bold mb-6 text-center text-blue-400">
+            Telegram Stream Generator
+        </h1>
+        
+        <div class="space-y-4">
+            <div>
+                <label for="videoLink" class="block mb-2 text-sm font-medium text-gray-300">
+                    Video/Audio Link
+                </label>
+                <input 
+                    id="videoLink"
+                    name="videoLink"
+                    type="text" 
+                    placeholder="Enter video/audio stream URL or YouTube link"
+                    required
+                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+            </div>
+
+            <div>
+                <label for="serverUrl" class="block mb-2 text-sm font-medium text-gray-300">
+                    Server URL
+                </label>
+                <input 
+                    id="serverUrl"
+                    name="serverUrl"
+                    type="text" 
+                    value="rtmps://dc5-1.rtmp.t.me/s/"
+                    required
+                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+            </div>
+
+            <div>
+                <label for="streamKey" class="block mb-2 text-sm font-medium text-gray-300">
+                    Stream Key
+                </label>
+                <input 
+                    id="streamKey"
+                    name="streamKey"
+                    type="text" 
+                    placeholder="Your stream key"
+                    required
+                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+            </div>
+
+            <div class="flex space-x-4">
+                <button 
+                    onclick="generateCommand()"
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-300"
+                >
+                    Generate Command
+                </button>
+            </div>
+
+            <div class="mt-4">
+                <label for="generatedCommand" class="block mb-2 text-sm font-medium text-gray-300">
+                    FFmpeg Command
+                </label>
+                <textarea 
+                    id="generatedCommand"
+                    name="generatedCommand"
+                    readonly
+                    rows="4"
+                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none"
+                ></textarea>
+            </div>
+
+            <div class="flex space-x-4 mt-4">
+                <button 
+                    id="copyButton"
+                    onclick="copyCommand()"
+                    class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300"
+                >
+                    Copy Command
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
