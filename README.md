@@ -1,0 +1,1 @@
+ffmpeg -re -stream_loop -1 -i "$(yt-dlp -f best -g "https://www.youtube.com/live/DcqbyHgtn4k")" -c:v libx264 -preset veryfast -b:v 3500k -maxrate 3500k -bufsize 7000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 160k -ac 2 -ar 44100 -f flv "rtmps://dc5-1.rtmp.t.me/s/dffsjfsjdfasdkf"
